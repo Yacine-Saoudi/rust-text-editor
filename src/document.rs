@@ -4,6 +4,7 @@ use crate::Position;
 use crate::Row;
 
 #[derive(Default)]
+#[allow(clippy::partial_pub_fields)]
 pub struct Document {
     rows: Vec<Row>,
     pub file_name: Option<String>,
@@ -12,7 +13,8 @@ pub struct Document {
 
 impl Document {
     #[allow(clippy::single_call_fn)]
-    pub fn open(filename: &str) -> Result<Self, std::io::Error> {
+    pub fn open(filename: &str) -> Result<Self, Error> {
+        #[allow(clippy::question_mark_used)]
         let contents = fs::read_to_string(filename)?;
         let mut rows = Vec::new();
         for value in contents.lines(){
@@ -23,10 +25,6 @@ impl Document {
             file_name: Some(filename.to_owned()),
             dirty: false,
         })
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.rows.is_empty()
     }
 
     pub fn row(&self, index: usize) -> Option<&Row> {
@@ -65,7 +63,7 @@ impl Document {
         }
         #[allow(clippy::indexing_slicing)]
         let new_row = self.rows[at.y].split(at.x);
-        #[allow(clippy::integer_arithmetic)]
+        #[allow(clippy::arithmetic_side_effects)]
         self.rows.insert(at.y + 1, new_row);
     }
 
@@ -88,7 +86,7 @@ impl Document {
         self.dirty = true;
     }
 
-    #[allow(clippy::integer_arithmetic, clippy::indexing_slicing)]
+    #[allow(clippy::arithmetic_side_effects, clippy::indexing_slicing)]
     pub fn delete(&mut self, at: &Position) {
         let len = self.rows.len();
         if at.y >= len {

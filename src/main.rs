@@ -1,4 +1,4 @@
-#![warn(clippy::all, clippy::pedantic, clippy::restriction)]
+#![warn(clippy::all, clippy::pedantic)]
 #![allow(
     clippy::missing_docs_in_private_items,
     clippy::implicit_return,

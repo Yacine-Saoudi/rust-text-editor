@@ -1,9 +1,10 @@
 use crate::Position;
-use std::io::{self, stdout, Write};
+use std::io::{self, stdout, Error, Write};
 use termion::input::TermRead;
 use termion::event::Key;
 use termion::raw::{IntoRawMode, RawTerminal};
 use termion::color;
+use termion::cursor::{Hide, Show, Goto};
 
 pub struct Size {
     pub width: u16,
@@ -17,7 +18,7 @@ pub struct Terminal {
 
 impl Terminal {
     #[allow(clippy::single_call_fn)]
-    pub fn default() -> Result <Self, std::io::Error> {
+    pub fn default() -> Result <Self, Error> {
         let size = termion::terminal_size()?;
         Ok(Self {
             size: Size {
@@ -32,6 +33,7 @@ impl Terminal {
         &self.size
     }
 
+    #[allow(clippy::absolute_paths)]
     pub fn clear_screen() {
         print!("{}", termion::clear::All);
     }
@@ -45,32 +47,28 @@ impl Terminal {
         print!("{}", color::Bg(color::Reset));
     }
 
-    pub fn set_fg_color(color: color::Rgb) {
-        print!("{}", color::Fg(color));
-    }
-
     #[allow(clippy::single_call_fn)]
     pub fn reset_fg_color() {
         print!("{}", color::Fg(color::Reset));
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_possible_truncation, clippy::as_conversions)]
     pub fn cursor_position(pos: &Position) {
-        let Position{mut x, mut y} = pos;
+        let Position{mut x, mut y} = *pos;
         x = x.saturating_add(1);
         y = y.saturating_add(1);
         let x = x as u16;
         let y = y as u16;
         
-        print!("{}", termion::cursor::Goto(x, y));
+        print!("{}", Goto(x, y));
     }
 
     #[allow(clippy::single_call_fn)]
-    pub fn flush() -> Result<(), std::io::Error> {
+    pub fn flush() -> Result<(), Error> {
         io::stdout().flush()
     }
 
-    pub fn read_key() -> Result<Key, std::io::Error> {
+    pub fn read_key() -> Result<Key, Error> {
         loop {
             if let Some(key) = io::stdin().lock().keys().next() {
                 return key;
@@ -80,14 +78,15 @@ impl Terminal {
 
     #[allow(clippy::single_call_fn)]
     pub fn cursor_hide() {
-        print!("{}", termion::cursor::Hide);
+        print!("{Hide}");
     }
     
     #[allow(clippy::single_call_fn)]
     pub fn cursor_show() {
-        print!("{}", termion::cursor::Show);
+        print!("{Show}");
     }
 
+    #[allow(clippy::absolute_paths)]
     pub fn clear_current_line() {
         print!("{}", termion::clear::CurrentLine);
     }

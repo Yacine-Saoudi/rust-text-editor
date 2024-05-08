@@ -23,7 +23,7 @@ impl Row {
         let end = cmp::min(end, self.string.len());
         let start = cmp::min(start, end);
         let mut result = String::new();
-        #[allow(clippy::integer_arithmetic, clippy::restriction)]
+        #[allow(clippy::arithmetic_side_effects, clippy::restriction)]
         for grapheme in self.string[..]
             .graphemes(true)
             .skip(start)
@@ -66,7 +66,7 @@ impl Row {
         self.update_len();
     }
 
-    #[allow(clippy::integer_arithmetic, clippy::string_slice)]
+    #[allow(clippy::arithmetic_side_effects, clippy::string_slice, clippy::redundant_else)]
     pub fn delete(&mut self, at: usize) {
         if at >= self.len() {
             return;
@@ -92,9 +92,5 @@ impl Row {
         self.string = beginning;
         self.update_len();
         Self::from(&*remainder)
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.string.is_empty()
     }
 }

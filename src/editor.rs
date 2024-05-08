@@ -2,9 +2,10 @@ use crate::Terminal;
 use crate::Document;
 use crate::Row;
 use std::env;
+use std::io::Error;
 use termion::event::Key;
 use termion::color;
-use std::time::Duration;
+use core::time::Duration;
 use std::time::Instant;
 
 const STATUS_FG_COLOR: color::Rgb = color::Rgb(63,63,63);
@@ -40,7 +41,7 @@ pub struct Editor {
 }
 
 impl Editor {
-    #[allow(clippy::single_call_fn)]
+    #[allow(clippy::single_call_fn, clippy::expect_used)]
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
         let mut initial_status = String::from("HELP: Ctrl-S to save | Ctrl-Q to quit");
@@ -50,7 +51,7 @@ impl Editor {
                 doc
             } 
             else {
-                initial_status = format!("ERR: Could not open file: {}", file_name);
+                initial_status = format!("ERR: Could not open file: {file_name}");
                 Document::default()
             }
         } else {
@@ -81,7 +82,7 @@ impl Editor {
         }
     }
 
-    fn refresh_screen(&self) -> Result<(), std::io::Error>{
+    fn refresh_screen(&self) -> Result<(), Error>{
         Terminal::cursor_hide();
         Terminal::cursor_position(&Position::default());
         if self.quitting {
@@ -108,7 +109,7 @@ impl Editor {
         } else {
             ""
         };
-        let mut file_name = "[No Name]".to_string();
+        let mut file_name = "[No Name]".to_owned();
         if let Some(name) = &self.document.file_name {
             file_name = name.clone();
             file_name.truncate(20);
@@ -120,14 +121,14 @@ impl Editor {
             self.cursor_position.y.saturating_add(1),
             self.document.len()
         );
-        let len = status.len() + line_indicator.len();
+        let len = status.len().saturating_add(line_indicator.len());
         status.push_str(&" ".repeat(width.saturating_sub(len)));
 
-        status = format!("{}{}", status, line_indicator);
+        status = format!("{status}{line_indicator}",);
         status.truncate(width);
         Terminal::set_bg_color(STATUS_BG_COLOR);
         Terminal::set_bg_color(STATUS_FG_COLOR);
-        println!("{}\r", status);
+        println!("{status}\r");
         Terminal::reset_bg_color();
         Terminal::reset_fg_color();
     }
@@ -135,7 +136,7 @@ impl Editor {
     fn draw_message_bar(&self) {
        Terminal::clear_current_line();
        let message = &self.status_message;
-       if Instant::now() - message.time < Duration::new(5, 0) {
+       if message.time.elapsed() < Duration::new(5, 0) {
         let mut text = message.text.clone();
         text.truncate(self.terminal.size().width as usize);
         print!("{text}");
@@ -165,19 +166,15 @@ impl Editor {
         }
     }
 
-    fn process_keypress(&mut self) -> Result <(), std::io::Error> {
+    fn process_keypress(&mut self) -> Result <(), Error> {
         let pressed_key = Terminal::read_key()?;
         match pressed_key {
             Key::Ctrl('q') => {
                 if self.document.is_dirty() {
                     let should_quit = self.prompt("Quit without saving? (y/n) ").unwrap_or(None);
-                    if should_quit.unwrap() == "y".to_string() {
-                        self.quitting = true;
-                    } else {
-                        self.quitting = false;
-                    }
+                    self.quitting = should_quit.unwrap() == *"y";
                 } else {
-                    self.quitting = true
+                    self.quitting = true;
                 }
             }
             Key::Backspace => {
@@ -220,10 +217,11 @@ impl Editor {
         }
     }
 
-    fn prompt(&mut self, prompt: &str) -> Result <Option<String>, std::io::Error> {
+    #[allow(clippy::min_ident_chars)]
+    fn prompt(&mut self, prompt: &str) -> Result <Option<String>, Error> {
         let mut result = String::new();
         loop {
-            self.status_message = StatusMessage::from(format!("{}{}", prompt, result));
+            self.status_message = StatusMessage::from(format!("{prompt}{result}"));
             self.refresh_screen()?;
             match Terminal::read_key()? {
                 Key::Backspace => result.truncate(result.len().saturating_sub(1)),
@@ -283,9 +281,9 @@ impl Editor {
             },
             Key::Left | Key::Char('h') => {
                 if x > 0 {
-                    x -= 1;
+                    x = x.saturating_sub(1);
                 } else if y > 0 {
-                    y -= 1;
+                    y = y.saturating_sub(1);
                     if let Some(row) = self.document.row(y) {
                         x = row.len();
                     } else {
@@ -295,9 +293,9 @@ impl Editor {
              },
             Key::Right |Key::Char('l') => {
                 if x < width {
-                    x += 1;
+                    x = x.saturating_add(1);
                 } else if y <= height {
-                    y += 1;
+                    y = y.saturating_add(1);
                     x = 0;
                 }
             },
@@ -335,7 +333,7 @@ impl Editor {
     }
 }
 
-fn die(e: &std::io::Error){
+fn die(e: &Error){
     Terminal::clear_screen();
     panic!("{}", e);
 }
