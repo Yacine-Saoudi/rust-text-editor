@@ -16,6 +16,7 @@ pub struct Terminal {
 }
 
 impl Terminal {
+    #[allow(clippy::single_call_fn)]
     pub fn default() -> Result <Self, std::io::Error> {
         let size = termion::terminal_size()?;
         Ok(Self {
@@ -39,6 +40,7 @@ impl Terminal {
         print!("{}", color::Bg(color));
     }
 
+    #[allow(clippy::single_call_fn)]
     pub fn reset_bg_color() {
         print!("{}", color::Bg(color::Reset));
     }
@@ -47,6 +49,7 @@ impl Terminal {
         print!("{}", color::Fg(color));
     }
 
+    #[allow(clippy::single_call_fn)]
     pub fn reset_fg_color() {
         print!("{}", color::Fg(color::Reset));
     }
@@ -62,6 +65,7 @@ impl Terminal {
         print!("{}", termion::cursor::Goto(x, y));
     }
 
+    #[allow(clippy::single_call_fn)]
     pub fn flush() -> Result<(), std::io::Error> {
         io::stdout().flush()
     }
@@ -74,10 +78,12 @@ impl Terminal {
         }
     }
 
+    #[allow(clippy::single_call_fn)]
     pub fn cursor_hide() {
         print!("{}", termion::cursor::Hide);
     }
     
+    #[allow(clippy::single_call_fn)]
     pub fn cursor_show() {
         print!("{}", termion::cursor::Show);
     }

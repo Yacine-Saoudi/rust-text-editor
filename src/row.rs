@@ -1,4 +1,4 @@
-use std::cmp;
+use core::cmp;
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
@@ -23,13 +23,14 @@ impl Row {
         let end = cmp::min(end, self.string.len());
         let start = cmp::min(start, end);
         let mut result = String::new();
+        #[allow(clippy::integer_arithmetic, clippy::restriction)]
         for grapheme in self.string[..]
             .graphemes(true)
             .skip(start)
             .take(end-start)
         {
             if grapheme == "\t" {
-                result.push_str(" ");
+                result.push(' ');
             } else {
                 result.push_str(grapheme);
             }
@@ -41,6 +42,7 @@ impl Row {
         self.len
     }
 
+    #[allow(clippy::string_slice)]
     fn update_len(&mut self) {
         self.len = self.string[..].graphemes(true).count();
     }
@@ -49,6 +51,8 @@ impl Row {
         self.string.as_bytes()
     }
 
+
+    #[allow(clippy::string_slice, clippy::redundant_else, clippy::min_ident_chars)]
     pub fn insert(&mut self, at: usize, c: char) {
         if at >= self.len() {
             self.string.push(c);
@@ -62,6 +66,7 @@ impl Row {
         self.update_len();
     }
 
+    #[allow(clippy::integer_arithmetic, clippy::string_slice)]
     pub fn delete(&mut self, at: usize) {
         if at >= self.len() {
             return;
@@ -79,12 +84,14 @@ impl Row {
         self.update_len();
     }
 
+
+    #[allow(clippy::indexing_slicing, clippy::string_slice)]
     pub fn split(&mut self, at: usize) -> Self {
         let beginning: String = self.string[..].graphemes(true).take(at).collect();
         let remainder: String = self.string[..].graphemes(true).skip(at).collect();
         self.string = beginning;
         self.update_len();
-        Self::from(&remainder[..])
+        Self::from(&*remainder)
     }
 
     pub fn is_empty(&self) -> bool {
